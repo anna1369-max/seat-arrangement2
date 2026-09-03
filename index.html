@@ -1,0 +1,666 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>科任教室分組 - 最終修正版</title>
+    <style>
+        :root {
+            --primary-color: #4a90e2; 
+            --wood-color: #d4a373;
+            --bg-color: #f0f2f5;
+            --text-color: #333;
+            --blackboard-color: #2b4a3b;
+        }
+
+        body {
+            font-family: "Microsoft JhengHei", sans-serif;
+            background-color: var(--bg-color);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            color: var(--text-color);
+        }
+
+        /* --- 控制面板 --- */
+        .control-panel {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            width: 100%;
+            max-width: 950px;
+            margin-bottom: 25px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        h3 { margin-top: 0; color: #444; border-bottom: 2px solid #eee; padding-bottom: 10px;}
+        
+        textarea {
+            width: 100%;
+            height: 100px;
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            font-size: 14px;
+            box-sizing: border-box;
+        }
+
+        .btn-group {
+            grid-column: 1 / -1;
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            padding-top: 10px;
+            border-top: 1px solid #eee;
+        }
+
+        button {
+            padding: 10px 25px;
+            font-size: 16px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: 0.2s;
+        }
+
+        .btn-gen { background-color: var(--primary-color); color: white; }
+        .btn-gen:hover { background-color: #357abd; }
+        .btn-print { background-color: #6c757d; color: white; }
+        .btn-print:hover { background-color: #5a6268; }
+
+        /* --- 雲端班級管理 --- */
+        .class-manager {
+            grid-column: 1 / -1;
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 10px;
+            padding: 15px 0;
+            border-top: 1px solid #eee;
+            border-bottom: 1px solid #eee;
+        }
+
+        .class-manager .cm-label {
+            color: #444;
+            font-weight: bold;
+            white-space: nowrap;
+        }
+
+        .class-manager input[type="text"],
+        .class-manager select {
+            padding: 8px 10px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+
+        .class-manager select { min-width: 170px; }
+
+        .btn-small {
+            padding: 8px 16px;
+            font-size: 14px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            color: white;
+            transition: 0.2s;
+            white-space: nowrap;
+        }
+
+        .btn-save { background-color: #28a745; }
+        .btn-save:hover { background-color: #218838; }
+        .btn-load { background-color: #17a2b8; }
+        .btn-load:hover { background-color: #138496; }
+        .btn-clear { background-color: #dc3545; }
+        .btn-clear:hover { background-color: #c82333; }
+
+        .sync-status {
+            font-size: 13px;
+            color: #888;
+            width: 100%;
+        }
+
+        /* --- 教室佈局 --- */
+        .classroom-container {
+            width: 100%;
+            max-width: 1000px;
+            background: white;
+            padding: 40px;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            position: relative;
+        }
+
+        /* 標示後方 */
+        .back-label {
+            color: #999;
+            font-weight: bold;
+            letter-spacing: 2px;
+            margin-bottom: 20px;
+            font-size: 14px;
+            text-transform: uppercase;
+        }
+
+        /* 黑板樣式 - 在最下面 */
+        .blackboard {
+            width: 350px;
+            height: 50px;
+            background: var(--blackboard-color);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 4px;
+            margin-top: 40px; 
+            letter-spacing: 8px;
+            font-size: 20px;
+            font-weight: bold;
+            box-shadow: 0 -4px 6px rgba(0,0,0,0.3);
+            border: 4px solid #a87b50;
+        }
+
+        .tables-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 40px 30px;
+            width: 100%;
+        }
+
+        .group-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .group-title {
+            background-color: #e9ecef;
+            padding: 4px 15px;
+            border-radius: 15px;
+            font-size: 14px;
+            font-weight: bold;
+            color: #555;
+            margin-bottom: 10px;
+        }
+
+        .desk-layout {
+            display: grid;
+            grid-template-columns: 1fr 50px 1fr;
+            gap: 5px;
+            width: 100%;
+            max-width: 280px;
+        }
+
+        .long-table-graphic {
+            background-color: var(--wood-color);
+            grid-column: 2;
+            grid-row: 1 / span 3;
+            border-radius: 4px;
+            border: 2px solid #b08d55;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            writing-mode: vertical-rl;
+            color: rgba(255,255,255,0.7);
+            font-size: 12px;
+            letter-spacing: 5px;
+        }
+
+        .seat-column {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .student-seat {
+            height: 35px;
+            background: white;
+            border: 2px solid #ddd;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 15px;
+            cursor: pointer;
+            transition: all 0.2s;
+            position: relative;
+            box-shadow: 0 2px 3px rgba(0,0,0,0.05);
+            user-select: none;
+        }
+        
+        .student-seat:hover {
+            border-color: var(--primary-color);
+            transform: translateY(-2px);
+        }
+
+        .student-seat.selected {
+            background-color: var(--primary-color);
+            color: white;
+            border-color: #2a69b3;
+            box-shadow: 0 0 8px rgba(74, 144, 226, 0.6);
+            z-index: 10;
+        }
+
+        .student-seat.empty {
+            border: 2px dashed #ccc;
+            background: #fafafa;
+            color: #ccc;
+            font-size: 13px;
+        }
+        
+        .student-seat.empty::before { content: "(空位)"; }
+        
+        .student-seat.empty:hover {
+            border-color: var(--primary-color);
+            background: #fff;
+            color: var(--primary-color);
+        }
+
+        .alert-msg {
+            color: #dc3545;
+            font-weight: bold;
+            margin-top: 10px;
+            display: none;
+        }
+
+        @media print {
+            .no-print, .control-panel { display: none; }
+            body { background: white; padding: 0; }
+            .classroom-container { box-shadow: none; padding: 10px; width: 100%; }
+            .long-table-graphic { background-color: #ddd !important; border-color: #999; color: #555; -webkit-print-color-adjust: exact; }
+            .blackboard { background-color: #333 !important; border-color: #000; color: white; -webkit-print-color-adjust: exact; }
+            .student-seat { border: 1px solid #555; }
+            .student-seat.empty { border: 1px dashed #ccc; color: transparent; }
+            .student-seat.empty::before { content: ""; }
+            .group-title { border: 1px solid #ccc; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="control-panel no-print">
+        <div>
+            <h3>1. 學生名單</h3>
+            <textarea id="inputNames" placeholder="請貼上學生姓名...">王小明, 李大華, 陳小美, 張三, 李四, 王五, 趙六, 孫七, 周八, 吳九, 鄭十, 林十一, 陳十二, 許十三, 劉十四, 楊十五, 黃十六, 蔡十七, 郭十八, 洪十九, 曾二十, 賴二一, 廖二二, 徐二三, 方二四, 葉二五</textarea>
+        </div>
+        <div>
+            <h3>2. 分開坐名單 (互斥)</h3>
+            <textarea id="inputConflicts" placeholder="輸入不能同組的學生，如：&#10;王小明, 李大華"></textarea>
+        </div>
+        <div class="class-manager">
+            <span class="cm-label">☁️ 雲端班級管理：</span>
+            <input type="text" id="classNameInput" placeholder="輸入班級名稱，如：114學年 三年2班">
+            <button class="btn-small btn-save" onclick="saveClass()">💾 儲存本班</button>
+            <select id="classSelect"><option value="">-- 選擇已儲存的班級 --</option></select>
+            <button class="btn-small btn-load" onclick="loadClass()">📂 讀取座位</button>
+            <button class="btn-small btn-clear" onclick="clearClass()">🗑️ 清除本班（畢業釋放空間）</button>
+            <div class="sync-status" id="syncStatus">尚未連線雲端</div>
+        </div>
+
+        <div class="btn-group">
+            <button class="btn-gen" onclick="generateSeats()">🎲 自動平均分配座位</button>
+            <button class="btn-print" onclick="window.print()">🖨️ 列印座位表</button>
+        </div>
+        <div id="statusMsg" class="alert-msg" style="text-align: center; width: 100%;"></div>
+        <div style="text-align: center; margin-top: 10px; color: #666; font-size: 0.9em;">💡 點擊任兩個位置（包含空位）即可交換</div>
+    </div>
+
+    <div class="classroom-container">
+        <div class="back-label">▼ 教室後方 ▼</div>
+        
+        <div class="tables-grid" id="tablesArea">
+            </div>
+        
+        <div class="blackboard">黑 板 (前方)</div>
+    </div>
+
+    <!-- Firebase SDK（雲端儲存班級名單用）-->
+    <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore-compat.js"></script>
+
+    <script>
+        // =====================================================
+        // 🔧 Firebase 設定：請至 Firebase 主控台建立專案後，
+        //    把「加入 Web 應用程式」取得的設定值貼在下面。
+        //    設定教學請見同資料夾內的 README.md
+        // =====================================================
+         constfirebaseConfig ={
+    apiKey:"AIzaSyDSvVf291qoiT5piuxu0jHKgjtpAVYza_s",
+    authDomain:"seat-arrangement-7b8e4.firebaseapp.com",
+    projectId:"seat-arrangement-7b8e4",
+    storageBucket:"seat-arrangement-7b8e4.firebasestorage.app",
+    messagingSenderId:"914623046727",
+    appId:"1:914623046727:web:1f0478da65f852856d7d62"
+        };
+
+        const CLASSES_COLLECTION = "seatingClasses";
+        let db = null;
+        let firebaseReady = false;
+
+        function initFirebase() {
+            const statusDiv = document.getElementById('syncStatus');
+            try {
+                if (firebaseConfig.apiKey === "YOUR_API_KEY") {
+                    statusDiv.innerText = "⚠️ 尚未設定 Firebase（請參考 README.md 完成設定後才能雲端儲存）";
+                    statusDiv.style.color = "#dc3545";
+                    return;
+                }
+                firebase.initializeApp(firebaseConfig);
+                db = firebase.firestore();
+                firebaseReady = true;
+                statusDiv.innerText = "✅ 雲端已連線，可儲存 / 讀取班級資料";
+                statusDiv.style.color = "#28a745";
+                refreshClassList();
+            } catch (err) {
+                console.error(err);
+                statusDiv.innerText = "❌ 雲端連線失敗：" + err.message;
+                statusDiv.style.color = "#dc3545";
+            }
+        }
+
+        let selectedSeat = null;
+        const TOTAL_TABLES = 6;
+        
+        window.onload = function() {
+            generateSeats();
+            initFirebase();
+        };
+
+        function generateSeats() {
+            selectedSeat = null;
+
+            const namesText = document.getElementById('inputNames').value;
+            let students = namesText.split(/[\n,]+/).map(s => s.trim()).filter(s => s !== "");
+            
+            const conflictsText = document.getElementById('inputConflicts').value;
+            let conflicts = [];
+            conflictsText.split('\n').forEach(line => {
+                let pair = line.split(/[,，]+/).map(s => s.trim()).filter(s => s !== "");
+                if (pair.length >= 2) conflicts.push(pair);
+            });
+
+            if (students.length === 0) {
+                alert("請輸入學生名單！");
+                return;
+            }
+
+            // 演算法
+            let bestGroups = null;
+            let minConflicts = Infinity;
+
+            for(let i=0; i<500; i++) {
+                let shuffled = [...students].sort(() => Math.random() - 0.5);
+                let groups = Array.from({length: TOTAL_TABLES}, () => []);
+                shuffled.forEach((student, idx) => {
+                    groups[idx % TOTAL_TABLES].push(student);
+                });
+
+                let currentConflicts = 0;
+                groups.forEach(group => {
+                    conflicts.forEach(pair => {
+                        if(pair.every(p => group.includes(p))) currentConflicts++;
+                    });
+                });
+
+                if(currentConflicts === 0) {
+                    bestGroups = groups;
+                    minConflicts = 0;
+                    break; 
+                }
+                if(currentConflicts < minConflicts) {
+                    minConflicts = currentConflicts;
+                    bestGroups = groups;
+                }
+            }
+
+            const msgDiv = document.getElementById('statusMsg');
+            if(minConflicts > 0) {
+                msgDiv.style.display = 'block';
+                msgDiv.innerText = `⚠️ 注意：尚有 ${minConflicts} 組衝突，請手動微調。`;
+            } else {
+                msgDiv.style.display = 'none';
+            }
+
+            renderLayout(bestGroups);
+        }
+
+        function renderLayout(groups) {
+            const container = document.getElementById('tablesArea');
+            container.innerHTML = '';
+
+            // --- 視覺順序設定 (v6: 教師視角 + 標準左至右順序) ---
+            // 螢幕上方 (後排): 左(Group 4), 中(Group 5), 右(Group 6)
+            // 螢幕下方 (前排): 左(Group 1), 中(Group 2), 右(Group 3)
+            // Index 對應: Group 1 -> 0, Group 4 -> 3
+            
+            const visualOrder = [3, 4, 5, 0, 1, 2];
+
+            visualOrder.forEach(groupIndex => {
+                const group = groups[groupIndex];
+                
+                const groupDiv = document.createElement('div');
+                groupDiv.className = 'group-container';
+
+                const title = document.createElement('div');
+                title.className = 'group-title';
+                title.innerText = `第 ${groupIndex + 1} 組`;
+                groupDiv.appendChild(title);
+
+                const deskLayout = document.createElement('div');
+                deskLayout.className = 'desk-layout';
+
+                // 左側 (前3人)
+                const leftCol = document.createElement('div');
+                leftCol.className = 'seat-column';
+                for(let i=0; i<3; i++) {
+                    createSeat(leftCol, group[i] || "");
+                }
+                deskLayout.appendChild(leftCol);
+
+                // 桌子
+                const tableGraphic = document.createElement('div');
+                tableGraphic.className = 'long-table-graphic';
+                tableGraphic.innerText = 'TABLE';
+                deskLayout.appendChild(tableGraphic);
+
+                // 右側 (後3人)
+                const rightCol = document.createElement('div');
+                rightCol.className = 'seat-column';
+                for(let i=3; i<6; i++) {
+                    createSeat(rightCol, group[i] || "");
+                }
+                deskLayout.appendChild(rightCol);
+
+                groupDiv.appendChild(deskLayout);
+                container.appendChild(groupDiv);
+            });
+        }
+
+        function createSeat(container, studentName) {
+            const seat = document.createElement('div');
+            
+            if (studentName) {
+                seat.className = 'student-seat';
+                seat.innerText = studentName;
+            } else {
+                seat.className = 'student-seat empty';
+                seat.innerText = ""; 
+            }
+            
+            seat.onclick = () => handleSeatClick(seat);
+            container.appendChild(seat);
+        }
+
+        function handleSeatClick(seatDiv) {
+            if (selectedSeat === null) {
+                seatDiv.classList.add('selected');
+                selectedSeat = seatDiv;
+                return;
+            } 
+            
+            if (selectedSeat === seatDiv) {
+                seatDiv.classList.remove('selected');
+                selectedSeat = null;
+                return;
+            }
+
+            // 交換內容
+            const tempText = seatDiv.innerText;
+            seatDiv.innerText = selectedSeat.innerText;
+            selectedSeat.innerText = tempText;
+
+            // 交換樣式 (處理空位)
+            const isTargetEmpty = seatDiv.classList.contains('empty');
+            const isSourceEmpty = selectedSeat.classList.contains('empty');
+
+            if (isSourceEmpty) seatDiv.classList.add('empty');
+            else seatDiv.classList.remove('empty');
+
+            if (isTargetEmpty) selectedSeat.classList.add('empty');
+            else selectedSeat.classList.remove('empty');
+
+            selectedSeat.classList.remove('selected');
+            selectedSeat = null;
+        }
+
+        // =====================================================
+        // ☁️ 雲端班級管理（Firebase Firestore）
+        // =====================================================
+
+        // 讀取目前畫面上實際的座位安排（含手動交換後的結果）
+        // 回傳格式與 generateSeats() 內的 groups 陣列相同：groupsData[groupIndex] = [6位學生或空字串]
+        function extractCurrentGroupsData() {
+            const groupsData = Array.from({length: TOTAL_TABLES}, () => ["", "", "", "", "", ""]);
+            document.querySelectorAll('.group-container').forEach(groupEl => {
+                const titleText = groupEl.querySelector('.group-title').innerText;
+                const groupNum = parseInt(titleText.replace(/[^0-9]/g, ''), 10);
+                if (!groupNum) return;
+                const groupIndex = groupNum - 1;
+                const seatEls = groupEl.querySelectorAll('.student-seat');
+                seatEls.forEach((seatEl, i) => {
+                    groupsData[groupIndex][i] = seatEl.classList.contains('empty') ? "" : seatEl.innerText;
+                });
+            });
+            return groupsData;
+        }
+
+        function setSyncStatus(text, isError) {
+            const statusDiv = document.getElementById('syncStatus');
+            statusDiv.innerText = text;
+            statusDiv.style.color = isError ? "#dc3545" : "#28a745";
+        }
+
+        function getClassNameOrAlert() {
+            const name = document.getElementById('classNameInput').value.trim();
+            if (!name) {
+                alert("請先輸入班級名稱！");
+                return null;
+            }
+            return name;
+        }
+
+        async function refreshClassList() {
+            if (!firebaseReady) return;
+            const select = document.getElementById('classSelect');
+            try {
+                const snapshot = await db.collection(CLASSES_COLLECTION).orderBy('updatedAt', 'desc').get();
+                select.innerHTML = '<option value="">-- 選擇已儲存的班級 --</option>';
+                snapshot.forEach(doc => {
+                    const opt = document.createElement('option');
+                    opt.value = doc.id;
+                    opt.innerText = doc.id;
+                    select.appendChild(opt);
+                });
+            } catch (err) {
+                console.error(err);
+                setSyncStatus("❌ 讀取班級列表失敗：" + err.message, true);
+            }
+        }
+
+        async function saveClass() {
+            if (!firebaseReady) { alert("尚未連線雲端，請先完成 Firebase 設定（見 README.md）。"); return; }
+            const className = getClassNameOrAlert();
+            if (!className) return;
+
+            const data = {
+                studentsText: document.getElementById('inputNames').value,
+                conflictsText: document.getElementById('inputConflicts').value,
+                groupsData: extractCurrentGroupsData(),
+                updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+            };
+
+            try {
+                setSyncStatus("儲存中...", false);
+                await db.collection(CLASSES_COLLECTION).doc(className).set(data);
+                setSyncStatus(`✅ 已儲存「${className}」的座位與名單`, false);
+                await refreshClassList();
+                document.getElementById('classSelect').value = className;
+            } catch (err) {
+                console.error(err);
+                setSyncStatus("❌ 儲存失敗：" + err.message, true);
+            }
+        }
+
+        async function loadClass() {
+            if (!firebaseReady) { alert("尚未連線雲端，請先完成 Firebase 設定（見 README.md）。"); return; }
+            const select = document.getElementById('classSelect');
+            const className = select.value;
+            if (!className) { alert("請先從下拉選單選擇一個班級！"); return; }
+
+            try {
+                setSyncStatus("讀取中...", false);
+                const doc = await db.collection(CLASSES_COLLECTION).doc(className).get();
+                if (!doc.exists) {
+                    setSyncStatus("⚠️ 找不到這個班級的資料", true);
+                    return;
+                }
+                const data = doc.data();
+                document.getElementById('inputNames').value = data.studentsText || "";
+                document.getElementById('inputConflicts').value = data.conflictsText || "";
+                document.getElementById('classNameInput').value = className;
+                selectedSeat = null;
+
+                if (data.groupsData && data.groupsData.length === TOTAL_TABLES) {
+                    renderLayout(data.groupsData);
+                    document.getElementById('statusMsg').style.display = 'none';
+                } else {
+                    generateSeats();
+                }
+                setSyncStatus(`✅ 已讀取「${className}」的座位安排`, false);
+            } catch (err) {
+                console.error(err);
+                setSyncStatus("❌ 讀取失敗：" + err.message, true);
+            }
+        }
+
+        async function clearClass() {
+            if (!firebaseReady) { alert("尚未連線雲端，請先完成 Firebase 設定（見 README.md）。"); return; }
+            const select = document.getElementById('classSelect');
+            const className = select.value || document.getElementById('classNameInput').value.trim();
+            if (!className) { alert("請先選擇或輸入要清除的班級名稱！"); return; }
+
+            const sure = confirm(`確定要清除「${className}」的雲端資料嗎？\n（畢業班級可用此功能釋放空間給下一屆使用，此動作無法復原）`);
+            if (!sure) return;
+
+            try {
+                setSyncStatus("清除中...", false);
+                await db.collection(CLASSES_COLLECTION).doc(className).delete();
+                setSyncStatus(`🗑️ 已清除「${className}」的雲端資料`, false);
+                await refreshClassList();
+            } catch (err) {
+                console.error(err);
+                setSyncStatus("❌ 清除失敗：" + err.message, true);
+            }
+        }
+    </script>
+</body>
+</html>
