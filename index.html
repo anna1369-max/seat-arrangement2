@@ -537,9 +537,10 @@
         // =====================================================
 
         // 讀取目前畫面上實際的座位安排（含手動交換後的結果）
-        // 回傳格式與 generateSeats() 內的 groups 陣列相同：groupsData[groupIndex] = [6位學生或空字串]
+        // 注意：Firestore 不支援「陣列包陣列」，所以每組座位包成 {seats: [...]} 物件，
+        // 存成「陣列包物件」的格式：groupsData[groupIndex] = {seats: [6位學生或空字串]}
         function extractCurrentGroupsData() {
-            const groupsData = Array.from({length: TOTAL_TABLES}, () => ["", "", "", "", "", ""]);
+            const groupsData = Array.from({length: TOTAL_TABLES}, () => ({ seats: ["", "", "", "", "", ""] }));
             document.querySelectorAll('.group-container').forEach(groupEl => {
                 const titleText = groupEl.querySelector('.group-title').innerText;
                 const groupNum = parseInt(titleText.replace(/[^0-9]/g, ''), 10);
@@ -547,7 +548,7 @@
                 const groupIndex = groupNum - 1;
                 const seatEls = groupEl.querySelectorAll('.student-seat');
                 seatEls.forEach((seatEl, i) => {
-                    groupsData[groupIndex][i] = seatEl.classList.contains('empty') ? "" : seatEl.innerText;
+                    groupsData[groupIndex].seats[i] = seatEl.classList.contains('empty') ? "" : seatEl.innerText;
                 });
             });
             return groupsData;
@@ -630,7 +631,9 @@
                 selectedSeat = null;
 
                 if (data.groupsData && data.groupsData.length === TOTAL_TABLES) {
-                    renderLayout(data.groupsData);
+                    // 相容舊格式（陣列包陣列）與新格式（陣列包 {seats: [...]} 物件）
+                    const groups = data.groupsData.map(g => Array.isArray(g) ? g : (g.seats || []));
+                    renderLayout(groups);
                     document.getElementById('statusMsg').style.display = 'none';
                 } else {
                     generateSeats();
